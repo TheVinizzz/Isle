@@ -54,12 +54,13 @@ The build is ad-hoc signed; Developer ID + notarization lands in v1.0 once we ha
 
 ### After install
 
-1. Look for the **Isle icon** in the menu bar (top-right area).
-2. Hover the notch — the panel expands.
+1. Hover the notch — the panel expands.
+2. **Right-click the notch** to open the context menu (Launch at Login, GitHub, Quit).
 3. Approve permission prompts as they appear:
    - **Calendar** — Full Access, to read today's events.
    - **Automation → Spotify / Music** — to control playback and fetch artwork.
-4. Open the status-bar menu → **Launch at Login** if you want Isle on boot.
+
+Isle runs without a Dock icon or menu-bar item to keep the screen distraction-free. The app itself lives at `/Applications/Isle.app` — drag it to the Trash any time to uninstall, or use `brew uninstall --cask isle` if you installed via Homebrew.
 
 ### Requirements
 

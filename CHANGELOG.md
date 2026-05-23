@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.6 — Distraction-free chrome
+
+- Removed the `NSStatusItem` menu-bar icon. The notch is the UI; the menu-bar slot was redundant.
+- Replaced it with a right-click context menu on the notch panel itself (works both collapsed and expanded). Same items: Launch at Login (with checkmark state via `SMAppService.mainApp.status`), GitHub Repository, Quit Isle (⌘Q).
+- README install section updated to mention right-click on the notch + `/Applications/Isle.app` location for uninstall.
+
 ## v0.1.5 — Launch-time playback hydration
 
 - `MediaService.start()` now spawns an AppleScript probe 1.5 seconds after launch so already-playing Spotify or Music tracks populate the widget without needing the user to advance a track. Previously the now-playing state only appeared on the first state change after Isle started.

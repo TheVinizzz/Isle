@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 import SwiftUI
 
 @MainActor
@@ -9,6 +10,7 @@ final class NotchWindowController: NSWindowController {
     private let finance: FinanceService
     private var globalMonitor: Any?
     private var localMonitor: Any?
+    private var rightClickMonitor: Any?
     private weak var screenRef: NSScreen?
 
     init(
@@ -82,6 +84,8 @@ final class NotchWindowController: NSWindowController {
         )
     }
 
+    // MARK: - Event monitors
+
     private func installEventMonitors() {
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
             Task { @MainActor in self?.handleMouseMoved(event) }
@@ -89,6 +93,9 @@ final class NotchWindowController: NSWindowController {
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
             self?.handleMouseMoved(event)
             return event
+        }
+        rightClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            Task { @MainActor in self?.handleRightClick(event) }
         }
     }
 
@@ -101,7 +108,13 @@ final class NotchWindowController: NSWindowController {
             NSEvent.removeMonitor(monitor)
             localMonitor = nil
         }
+        if let monitor = rightClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            rightClickMonitor = nil
+        }
     }
+
+    // MARK: - Hover (left/no button)
 
     private func handleMouseMoved(_ event: NSEvent) {
         guard let screen = screenRef else { return }
@@ -135,10 +148,6 @@ final class NotchWindowController: NSWindowController {
 
         presenter.setHovered(shouldBeHovered)
 
-        // Re-probe on hover transition if we don't have state yet (or it went
-        // stale). Catches both the cold-start case where the launch probe was
-        // denied at the TCC prompt, and the case where music was paused
-        // through a path that doesn't fire a notification.
         if wasCollapsed && shouldBeHovered {
             Task { @MainActor [media] in
                 await media.probeCurrentStateIfStale()
@@ -155,5 +164,129 @@ final class NotchWindowController: NSWindowController {
     ) -> Bool {
         guard mouse.y >= topY - height, mouse.y <= topY else { return false }
         return abs(mouse.x - centerX) <= halfWidth
+    }
+
+    // MARK: - Right-click context menu
+
+    private func handleRightClick(_ event: NSEvent) {
+        guard let screen = screenRef,
+              let window
+        else { return }
+        let notch = screen.notchSize
+        guard notch != .zero else { return }
+
+        let mouse = NSEvent.mouseLocation
+        let topY = screen.frame.maxY
+        let centerX = screen.frame.midX
+
+        // Accept right-click anywhere inside the current panel bounds (works
+        // whether collapsed or expanded).
+        let halfWidth: CGFloat
+        let height: CGFloat
+        if presenter.state == .hovered {
+            halfWidth = NotchLayout.expandedWidth / 2 + NotchLayout.expandedHitGrace
+            height = NotchLayout.expandedHeight + NotchLayout.expandedHitGrace
+        } else {
+            halfWidth = notch.width / 2 + NotchLayout.collapsedHitGrace
+            height = notch.height + NotchLayout.collapsedHitGrace
+        }
+
+        guard mouse.y >= topY - height,
+              mouse.y <= topY,
+              abs(mouse.x - centerX) <= halfWidth
+        else { return }
+
+        showContextMenu(at: mouse, in: window)
+    }
+
+    private func showContextMenu(at screenPoint: NSPoint, in window: NSWindow) {
+        let frame = window.frame
+        let windowPoint = NSPoint(
+            x: screenPoint.x - frame.origin.x,
+            y: screenPoint.y - frame.origin.y
+        )
+        let menu = buildMenu()
+        menu.popUp(positioning: nil, at: windowPoint, in: window.contentView)
+    }
+
+    private func buildMenu() -> NSMenu {
+        let menu = NSMenu()
+
+        let header = NSMenuItem(title: "Isle", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        menu.addItem(header)
+
+        let version = NSMenuItem(
+            title: "Version \(Self.versionString)",
+            action: nil,
+            keyEquivalent: ""
+        )
+        version.isEnabled = false
+        menu.addItem(version)
+
+        menu.addItem(.separator())
+
+        let launch = NSMenuItem(
+            title: "Launch at Login",
+            action: #selector(toggleLaunchAtLogin),
+            keyEquivalent: ""
+        )
+        launch.target = self
+        launch.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        menu.addItem(launch)
+
+        menu.addItem(.separator())
+
+        let github = NSMenuItem(
+            title: "GitHub Repository",
+            action: #selector(openGitHub),
+            keyEquivalent: ""
+        )
+        github.target = self
+        menu.addItem(github)
+
+        menu.addItem(.separator())
+
+        let quit = NSMenuItem(
+            title: "Quit Isle",
+            action: #selector(quit),
+            keyEquivalent: "q"
+        )
+        quit.target = self
+        menu.addItem(quit)
+
+        return menu
+    }
+
+    // MARK: - Menu actions
+
+    @objc private func toggleLaunchAtLogin() {
+        let service = SMAppService.mainApp
+        do {
+            if service.status == .enabled {
+                try service.unregister()
+            } else {
+                try service.register()
+            }
+        } catch {
+            NSLog("Isle: launch at login toggle failed — \(error.localizedDescription)")
+        }
+    }
+
+    @objc private func openGitHub() {
+        if let url = URL(string: "https://github.com/TheVinizzz/Isle") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc private func quit() {
+        NSApp.terminate(nil)
+    }
+
+    private static var versionString: String {
+        let info = Bundle.main.infoDictionary
+        let v = info?["CFBundleShortVersionString"] as? String ?? "0.0"
+        let b = info?["CFBundleVersion"] as? String ?? "1"
+        return "\(v) (\(b))"
     }
 }
