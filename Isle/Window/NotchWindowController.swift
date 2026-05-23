@@ -135,11 +135,13 @@ final class NotchWindowController: NSWindowController {
 
         presenter.setHovered(shouldBeHovered)
 
-        // Lazy probe on the first transition into the hovered state — populates
-        // the now-playing widget without needing a track-change notification.
+        // Re-probe on hover transition if we don't have state yet (or it went
+        // stale). Catches both the cold-start case where the launch probe was
+        // denied at the TCC prompt, and the case where music was paused
+        // through a path that doesn't fire a notification.
         if wasCollapsed && shouldBeHovered {
             Task { @MainActor [media] in
-                await media.probeInitialStateIfNeeded()
+                await media.probeCurrentStateIfStale()
             }
         }
     }

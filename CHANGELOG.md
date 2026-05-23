@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5 — Launch-time playback hydration
+
+- `MediaService.start()` now spawns an AppleScript probe 1.5 seconds after launch so already-playing Spotify or Music tracks populate the widget without needing the user to advance a track. Previously the now-playing state only appeared on the first state change after Isle started.
+- Spotify probe pulls `artwork url` inline with the title/artist/album/state query, so cover art lands in the same TCC round-trip instead of triggering a second AppleScript call.
+- Replaced the one-shot `probeInitialStateIfNeeded` (gated by a `hasProbedInitialState` flag) with `probeCurrentStateIfStale` that re-tries when state is empty or stale. Lets users recover after declining the initial TCC prompt without restarting the app.
+
 ## v0.1.4 — Homebrew tap
 
 - Published [TheVinizzz/homebrew-isle](https://github.com/TheVinizzz/homebrew-isle) — `brew install --cask TheVinizzz/isle/isle` is now the primary install path. Homebrew strips the macOS quarantine flag automatically, so installing this way avoids Gatekeeper prompts entirely (including the prompt that hit `Install Isle.command` inside the DMG).

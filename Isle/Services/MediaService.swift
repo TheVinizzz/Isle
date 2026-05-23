@@ -7,7 +7,10 @@ import SwiftUI
 /// (push-based, public API, works on macOS 14+ including 15.4+ entitlement era).
 ///
 /// Playback control goes through AppleScript (osascript) — triggers a one-time
-/// TCC Automation prompt on first use.
+/// TCC Automation prompt on first use. The same prompt covers the launch-time
+/// probe that hydrates state for tracks that were already playing when Isle
+/// started up (notifications only fire on state changes, so without the probe
+/// the panel stays empty until the user changes track).
 @MainActor
 @Observable
 final class MediaService {
@@ -54,7 +57,13 @@ final class MediaService {
 
     private var observers: [NSObjectProtocol] = []
     private var artworkLoadTask: Task<Void, Never>?
-    private var hasProbedInitialState = false
+    private var launchProbeTask: Task<Void, Never>?
+    private var lastProbeAt: Date = .distantPast
+
+    /// Minimum time between hover-triggered re-probes — keeps the AppleScript
+    /// bridge from being hammered when the user is bouncing in and out of the
+    /// notch.
+    private let probeMinInterval: TimeInterval = 3
 
     func start() {
         let dnc = DistributedNotificationCenter.default()
@@ -76,6 +85,16 @@ final class MediaService {
                 Task { @MainActor in self?.handleAppleMusic(note) }
             }
         )
+
+        // Notifications only fire on state changes. If Spotify or Music was
+        // already playing when Isle launched, no notification arrives until
+        // the user changes track. Probe via AppleScript after a short delay
+        // so the panel hydrates without that round-trip.
+        launchProbeTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled else { return }
+            await self?.probeCurrentState()
+        }
     }
 
     func stop() {
@@ -83,6 +102,8 @@ final class MediaService {
         observers.forEach { dnc.removeObserver($0) }
         observers.removeAll()
         artworkLoadTask?.cancel()
+        launchProbeTask?.cancel()
+        launchProbeTask = nil
     }
 
     // MARK: - Notification handlers
@@ -156,8 +177,7 @@ final class MediaService {
         artist = newArtist
         album = info["Album"] as? String ?? ""
         isPlaying = state == "Playing"
-        // Apple Music doesn't ship artwork in the notification; would need an
-        // AppleScript fetch for `raw data of artwork 1` (heavy, deferred).
+
         if trackChanged {
             trackChangeID = UUID()
             artwork = nil
@@ -214,21 +234,30 @@ final class MediaService {
         }
     }
 
-    // MARK: - Initial state probe
+    // MARK: - State probe
 
-    /// Lazily fetch the current playback state from Spotify and Apple Music.
-    /// Called on first hover so the panel shows real data without requiring
-    /// the user to advance a track to trigger a notification.
-    func probeInitialStateIfNeeded() async {
-        guard !hasProbedInitialState else { return }
-        hasProbedInitialState = true
+    /// Re-probes Spotify and Music for whatever track is currently loaded.
+    /// Called on app launch (so already-playing music shows up without a
+    /// state change) and on hover when our state is empty (so a denied TCC
+    /// prompt earlier can be retried).
+    func probeCurrentStateIfStale() async {
+        let elapsed = Date().timeIntervalSince(lastProbeAt)
+        guard source == .none || elapsed > probeMinInterval else { return }
+        await probeCurrentState()
+    }
 
-        if let result = await probeApp(name: "Spotify") {
+    func probeCurrentState() async {
+        lastProbeAt = Date()
+        if let result = await probeSpotify() {
             apply(result, source: .spotify)
-            await fetchSpotifyArtwork()
+            if let url = result.artworkURL {
+                loadArtwork(from: url)
+            } else {
+                await fetchSpotifyArtwork()
+            }
             return
         }
-        if let result = await probeApp(name: "Music") {
+        if let result = await probeMusic() {
             apply(result, source: .appleMusic)
         }
     }
@@ -238,6 +267,7 @@ final class MediaService {
         let artist: String
         let album: String
         let isPlaying: Bool
+        let artworkURL: URL?
     }
 
     private func apply(_ result: ProbeResult, source: Source) {
@@ -250,11 +280,45 @@ final class MediaService {
         if trackChanged { trackChangeID = UUID() }
     }
 
-    private func probeApp(name: String) async -> ProbeResult? {
+    private func probeSpotify() async -> ProbeResult? {
         let script = """
-        if application "\(name)" is running then
+        if application "Spotify" is running then
             try
-                tell application "\(name)"
+                tell application "Spotify"
+                    set t to name of current track
+                    set ar to artist of current track
+                    set al to album of current track
+                    set st to (player state as string)
+                    set au to artwork url of current track
+                    return t & "‖" & ar & "‖" & al & "‖" & st & "‖" & au
+                end tell
+            on error
+                return ""
+            end try
+        else
+            return ""
+        end if
+        """
+        guard let output = await runScriptCapturing(script),
+              !output.isEmpty
+        else { return nil }
+        let parts = output.components(separatedBy: "‖")
+        guard parts.count >= 4, !parts[0].isEmpty else { return nil }
+        let urlString = parts.count >= 5 ? parts[4] : ""
+        return ProbeResult(
+            title: parts[0],
+            artist: parts[1],
+            album: parts[2],
+            isPlaying: parts[3].lowercased() == "playing",
+            artworkURL: urlString.isEmpty ? nil : URL(string: urlString)
+        )
+    }
+
+    private func probeMusic() async -> ProbeResult? {
+        let script = """
+        if application "Music" is running then
+            try
+                tell application "Music"
                     set t to name of current track
                     set ar to artist of current track
                     set al to album of current track
@@ -272,12 +336,13 @@ final class MediaService {
               !output.isEmpty
         else { return nil }
         let parts = output.components(separatedBy: "‖")
-        guard parts.count == 4 else { return nil }
+        guard parts.count >= 4, !parts[0].isEmpty else { return nil }
         return ProbeResult(
             title: parts[0],
             artist: parts[1],
             album: parts[2],
-            isPlaying: parts[3].lowercased() == "playing"
+            isPlaying: parts[3].lowercased() == "playing",
+            artworkURL: nil
         )
     }
 
