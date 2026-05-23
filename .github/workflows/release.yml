@@ -46,12 +46,50 @@ jobs:
           STAGE=$(mktemp -d)
           cp -R "$APP" "$STAGE/"
           ln -s /Applications "$STAGE/Applications"
+
+          cat > "$STAGE/Install Isle.command" <<'INSTALLER_EOF'
+          #!/bin/bash
+          set -e
+          cd "$(dirname "$0")"
+          APP_NAME="Isle"
+          SRC="${APP_NAME}.app"
+          DEST="/Applications/${APP_NAME}.app"
+          if [[ ! -d "$SRC" ]]; then
+              osascript -e 'display dialog "Isle.app not found beside this installer." buttons {"OK"} default button "OK" with icon stop' >/dev/null || true
+              exit 1
+          fi
+          killall "$APP_NAME" 2>/dev/null || true
+          sleep 1
+          rm -rf "$DEST"
+          cp -R "$SRC" "$DEST"
+          xattr -dr com.apple.quarantine "$DEST" 2>/dev/null || true
+          open "$DEST"
+          osascript -e 'display notification "Isle is now installed and running." with title "Isle" sound name "Glass"' >/dev/null || true
+          echo "✓ Done — you can close this Terminal window."
+          INSTALLER_EOF
+          chmod +x "$STAGE/Install Isle.command"
+
+          cat > "$STAGE/README.txt" <<'README_EOF'
+          Isle — install guide
+
+          OPTION A — automated:
+             Double-click "Install Isle.command".
+
+          OPTION B — manual:
+             Drag Isle.app onto the Applications shortcut, then right-click
+             Isle in Applications → Open → confirm the Gatekeeper prompt.
+
+          OPTION C — one-line Terminal install:
+             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheVinizzz/Isle/main/scripts/install.sh)"
+          README_EOF
+
           mkdir -p dist
           hdiutil create \
             -volname "Isle" \
             -srcfolder "$STAGE" \
             -ov \
             -format UDZO \
+            -fs HFS+ \
             "dist/Isle-${VERSION}.dmg"
           rm -rf "$STAGE"
           echo "DMG_PATH=dist/Isle-${VERSION}.dmg" >> "$GITHUB_ENV"
@@ -66,14 +104,20 @@ jobs:
           body: |
             Isle ${{ env.VERSION }} — turn your MacBook notch into an interactive island.
 
-            ## Install
-            1. Download `Isle-${{ env.VERSION }}.dmg`
-            2. Open it, drag **Isle** into Applications
-            3. First launch: right-click `Isle.app` → **Open** (Gatekeeper bypass — the build is ad-hoc signed, not notarized)
-            4. Grant permissions when prompted (Calendar, Automation for Spotify / Music)
+            ## Install (one-line, no Gatekeeper prompt)
+            ```bash
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheVinizzz/Isle/main/scripts/install.sh)"
+            ```
+
+            ## Install (DMG)
+            1. Download `Isle-${{ env.VERSION }}.dmg` below.
+            2. Double-click **Install Isle.command** inside the DMG — it copies the app to `/Applications`, clears the quarantine flag, and launches Isle. No Gatekeeper prompt.
+            3. Or drag the app manually; the first launch will show a "Apple cannot verify…" warning — bypass with right-click → **Open**.
+            4. Grant Calendar + Automation (Spotify / Music) permissions when prompted.
 
             ## Notes
             Requires macOS 14.0 or newer on an Apple Silicon MacBook with a notch.
+            The build is ad-hoc signed; Developer ID + notarization is planned for v1.0.
           draft: false
           prerelease: false
 

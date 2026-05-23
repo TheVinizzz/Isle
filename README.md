@@ -21,21 +21,43 @@ Isle is a free, open-source macOS menu-bar utility that turns the hardware notch
 
 ## Install
 
-### From release (recommended)
+### One-line install (recommended)
 
-1. Download the latest `Isle-<version>.dmg` from [Releases](../../releases).
-2. Open the DMG and drag **Isle** into Applications.
-3. **First launch:** right-click `Isle.app` → **Open** to bypass Gatekeeper (the build is ad-hoc signed; macOS warns about unidentified developers).
-4. Grant permissions when prompted:
-   - **Calendar** — for the day-strip events widget.
-   - **Automation** for Spotify and Music — for playback control and artwork fetch.
-5. Optional: open the status bar menu (notch icon) → **Launch at Login**.
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheVinizzz/Isle/main/scripts/install.sh)"
+```
+
+Downloads the latest release, copies `Isle.app` to `/Applications`, clears the macOS quarantine flag, and launches. Takes ~10 seconds. **No Gatekeeper warning** because `curl` doesn't tag downloads the way browsers do.
+
+### DMG download
+
+If you'd rather avoid Terminal, grab the DMG from [Releases](../../releases/latest):
+
+1. Open `Isle-<version>.dmg`.
+2. **Double-click `Install Isle.command`** inside the DMG. Terminal opens briefly, copies the app to `/Applications`, clears quarantine, and launches Isle. Done.
+
+The DMG also contains the classic drag layout (drag `Isle.app` onto the `Applications` shortcut). If you go that route, the first launch will show a Gatekeeper warning ("Apple cannot verify…"). Bypass it with right-click → **Open** → confirm. The build is ad-hoc signed but not notarized — proper notarization will land in v1.0 once we have an Apple Developer ID.
+
+### After install
+
+1. Look for the **Isle icon** in the menu bar (top-right area).
+2. Hover the notch — the panel expands.
+3. Approve permission prompts as they appear:
+   - **Calendar** — Full Access, to read today's events.
+   - **Automation → Spotify / Music** — to control playback and fetch artwork.
+4. Open the status-bar menu → **Launch at Login** if you want Isle on boot.
 
 ### Requirements
 
 - macOS 14.0 (Sonoma) or newer.
 - Apple Silicon MacBook with a notch (14"/16" Pro, MacBook Air M2+).
-- The app no-ops on Macs without a notch.
+- The app no-ops on Macs without a notch — safe to install anywhere.
+
+### Uninstall
+
+```bash
+killall Isle && rm -rf /Applications/Isle.app
+```
 
 ## How it works
 

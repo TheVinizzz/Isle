@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.2 — Installer experience
+
+- `scripts/install.sh` — one-line remote installer. Curl-downloaded artifacts skip the quarantine attribute browsers add, so installing this way avoids the "Apple cannot verify this app" prompt entirely.
+- DMG now includes `Install Isle.command` — double-clicking it copies the app to `/Applications`, clears any quarantine flag, and launches Isle.
+- DMG `README.txt` documents both paths for users who'd rather not use Terminal.
+- README install section rewritten with primary curl path, manual fallback, and uninstall command.
+
 ## v0.1.1 — Shadow color leak fix
 
 - Split the root `ZStack` into two layers: a clean black silhouette that owns the drop shadow, and a clipped content layer that owns the audio visualizer and widgets. The previous structure let the visualizer's `.plusLighter` blend mode tint the drop shadow with the artwork accent color, producing a faint horizontal halo below the panel.

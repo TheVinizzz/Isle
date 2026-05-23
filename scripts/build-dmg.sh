@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
 # Builds Isle.app in Release configuration and packages it into a DMG
-# with a drag-to-Applications shortcut. The DMG is ad-hoc signed and
-# ready for direct distribution (users will need to right-click → Open
-# the first time they launch it, since it's not notarized).
+# with a drag-to-Applications shortcut, plus an "Install Isle.command"
+# script that automates the install for users who'd rather not deal
+# with Gatekeeper warnings.
 #
 # Usage:
 #   scripts/build-dmg.sh
@@ -48,6 +48,68 @@ rm -rf "$DIST"
 mkdir -p "$STAGE"
 cp -R "$APP_PATH" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
+
+# Bundle a one-click installer that clears the quarantine attribute so
+# users can launch without "Apple cannot verify this app" prompts.
+cat > "$STAGE/Install Isle.command" <<'INSTALLER_EOF'
+#!/bin/bash
+# Installs Isle to /Applications and clears the macOS quarantine flag
+# so the first launch doesn't trigger a Gatekeeper warning.
+
+set -e
+
+cd "$(dirname "$0")"
+
+APP_NAME="Isle"
+SRC="${APP_NAME}.app"
+DEST="/Applications/${APP_NAME}.app"
+
+if [[ ! -d "$SRC" ]]; then
+    osascript -e 'display dialog "Isle.app not found beside this installer. Open the DMG first, then run this script from inside the mounted volume." buttons {"OK"} default button "OK" with icon stop' >/dev/null || true
+    exit 1
+fi
+
+echo "→ Stopping running Isle (if any)..."
+killall "$APP_NAME" 2>/dev/null || true
+sleep 1
+
+echo "→ Installing to ${DEST}..."
+rm -rf "$DEST"
+cp -R "$SRC" "$DEST"
+
+echo "→ Clearing Gatekeeper quarantine attribute..."
+xattr -dr com.apple.quarantine "$DEST" 2>/dev/null || true
+
+echo "→ Launching Isle..."
+open "$DEST"
+
+osascript -e 'display notification "Isle is now installed and running. Look for the icon in the menu bar." with title "Isle" sound name "Glass"' >/dev/null || true
+
+echo ""
+echo "✓ Done. You can close this Terminal window."
+INSTALLER_EOF
+chmod +x "$STAGE/Install Isle.command"
+
+# Plain-text README inside the DMG for users who prefer the manual path.
+cat > "$STAGE/README.txt" <<'README_EOF'
+Isle — install guide
+
+OPTION A (recommended) — automated:
+   Double-click "Install Isle.command".
+   Terminal opens briefly, installs Isle, and launches it.
+
+OPTION B — manual:
+   1. Drag Isle.app onto the Applications shortcut.
+   2. Open Applications, right-click Isle, choose Open.
+   3. Confirm the Gatekeeper prompt that appears (only required once).
+
+After install, look for the Isle icon in your menu bar.
+First launch will request Calendar and Automation permissions — accept them so
+the calendar widget and music controls can do their thing.
+
+A faster option exists if you have Terminal handy:
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheVinizzz/Isle/main/scripts/install.sh)"
+README_EOF
 
 echo "→ Creating $DMG_NAME..."
 hdiutil create \
