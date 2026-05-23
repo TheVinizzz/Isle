@@ -1,5 +1,11 @@
 # Changelog
 
+## Tap v0.1.6.1 — Gatekeeper bypass via postflight
+
+- `homebrew-isle` cask formula now strips the `com.apple.quarantine` xattr in a `postflight` block so macOS Gatekeeper doesn't show "Apple cannot verify this app…" on first launch. Same pattern boring-notch and SourceGit use for ad-hoc-signed builds. (Earlier `brew install --cask` runs still triggered Gatekeeper because Homebrew sets quarantine by default and our cask wasn't stripping it.)
+- Added `uninstall quit: "app.isle.macos"` so `brew uninstall --cask isle` quits a running instance before removing the bundle.
+- Cask `caveats` text guides the user through the manual `xattr` fallback if Gatekeeper still blocks the app for any reason.
+
 ## v0.1.6 — Distraction-free chrome
 
 - Removed the `NSStatusItem` menu-bar icon. The notch is the UI; the menu-bar slot was redundant.

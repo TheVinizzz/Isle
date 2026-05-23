@@ -27,9 +27,17 @@ Isle is a free, open-source macOS menu-bar utility that turns the hardware notch
 brew install --cask TheVinizzz/isle/isle
 ```
 
-Homebrew handles the entire flow — downloads the DMG, strips the macOS quarantine flag, copies `Isle.app` to `/Applications`. **Zero Gatekeeper prompts.** Upgrades later are just `brew upgrade --cask isle`.
+The cask's `postflight` step runs `xattr -dr com.apple.quarantine /Applications/Isle.app` so macOS Gatekeeper doesn't show "Apple cannot verify this app…" on first launch — same pattern boring-notch and SourceGit use to ship ad-hoc-signed builds without paying for an Apple Developer ID. Upgrades later are just `brew upgrade --cask isle`.
 
 The tap lives at [TheVinizzz/homebrew-isle](https://github.com/TheVinizzz/homebrew-isle).
+
+**If macOS still blocks the launch** (rare — only if the postflight failed): run once in Terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Isle.app
+```
+
+Or open **System Settings → Privacy & Security → "Isle was blocked" → Open Anyway**.
 
 ### One-line curl install
 
