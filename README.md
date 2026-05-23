@@ -21,22 +21,36 @@ Isle is a free, open-source macOS menu-bar utility that turns the hardware notch
 
 ## Install
 
-### One-line install (recommended)
+### Homebrew (recommended)
+
+```bash
+brew install --cask TheVinizzz/isle/isle
+```
+
+Homebrew handles the entire flow — downloads the DMG, strips the macOS quarantine flag, copies `Isle.app` to `/Applications`. **Zero Gatekeeper prompts.** Upgrades later are just `brew upgrade --cask isle`.
+
+The tap lives at [TheVinizzz/homebrew-isle](https://github.com/TheVinizzz/homebrew-isle).
+
+### One-line curl install
+
+If you don't have Homebrew:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheVinizzz/Isle/main/scripts/install.sh)"
 ```
 
-Downloads the latest release, copies `Isle.app` to `/Applications`, clears the macOS quarantine flag, and launches. Takes ~10 seconds. **No Gatekeeper warning** because `curl` doesn't tag downloads the way browsers do.
+Downloads the latest release, copies `Isle.app` to `/Applications`, clears the macOS quarantine flag, and launches. Takes ~10 seconds. Also Gatekeeper-prompt-free because `curl`-downloaded files don't get the quarantine attribute browsers attach.
 
 ### DMG download
 
-If you'd rather avoid Terminal, grab the DMG from [Releases](../../releases/latest):
+From [Releases](../../releases/latest):
 
 1. Open `Isle-<version>.dmg`.
-2. **Double-click `Install Isle.command`** inside the DMG. Terminal opens briefly, copies the app to `/Applications`, clears quarantine, and launches Isle. Done.
+2. **Double-click `Install Isle.command`** inside the DMG — the first time you'll need to right-click the script and choose **Open** to bypass Gatekeeper (Apple flags downloaded shell scripts the same way it flags apps). After that one-time confirmation, the script copies the app to `/Applications`, clears quarantine, and launches Isle.
 
-The DMG also contains the classic drag layout (drag `Isle.app` onto the `Applications` shortcut). If you go that route, the first launch will show a Gatekeeper warning ("Apple cannot verify…"). Bypass it with right-click → **Open** → confirm. The build is ad-hoc signed but not notarized — proper notarization will land in v1.0 once we have an Apple Developer ID.
+The DMG also contains the classic drag layout (drag `Isle.app` onto the `Applications` shortcut). Going that route, the first launch will show a "Apple cannot verify…" warning — bypass it with right-click → **Open** → confirm.
+
+The build is ad-hoc signed; Developer ID + notarization lands in v1.0 once we have an Apple Developer ID. Homebrew Cask sidesteps the issue entirely, which is why we recommend it.
 
 ### After install
 

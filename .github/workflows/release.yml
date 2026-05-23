@@ -104,14 +104,19 @@ jobs:
           body: |
             Isle ${{ env.VERSION }} — turn your MacBook notch into an interactive island.
 
-            ## Install (one-line, no Gatekeeper prompt)
+            ## Install — Homebrew (recommended, zero Gatekeeper prompts)
+            ```bash
+            brew install --cask TheVinizzz/isle/isle
+            ```
+
+            ## Install — one-line curl
             ```bash
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheVinizzz/Isle/main/scripts/install.sh)"
             ```
 
-            ## Install (DMG)
+            ## Install — DMG
             1. Download `Isle-${{ env.VERSION }}.dmg` below.
-            2. Double-click **Install Isle.command** inside the DMG — it copies the app to `/Applications`, clears the quarantine flag, and launches Isle. No Gatekeeper prompt.
+            2. Double-click **Install Isle.command** inside the DMG (first time: right-click → Open to bypass Gatekeeper).
             3. Or drag the app manually; the first launch will show a "Apple cannot verify…" warning — bypass with right-click → **Open**.
             4. Grant Calendar + Automation (Spotify / Music) permissions when prompted.
 

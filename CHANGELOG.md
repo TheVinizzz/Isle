@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.4 — Homebrew tap
+
+- Published [TheVinizzz/homebrew-isle](https://github.com/TheVinizzz/homebrew-isle) — `brew install --cask TheVinizzz/isle/isle` is now the primary install path. Homebrew strips the macOS quarantine flag automatically, so installing this way avoids Gatekeeper prompts entirely (including the prompt that hit `Install Isle.command` inside the DMG).
+- README install section reordered: Homebrew first, curl second, DMG third.
+
 ## v0.1.3 — Collapsed-state layout fix
 
 - Conditionally render `ExpandedContent` and `AudioVisualizer` only when the panel is hovered. Their combined intrinsic width (~680pt rigid widths from NowPlaying + Calendar + Finance + dividers) was forcing the content `ZStack` to grow past the collapsed pill's `.frame(200, 32)`, ballooning the visible panel.
