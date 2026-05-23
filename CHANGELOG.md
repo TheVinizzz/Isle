@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.7 — First-launch welcome card
+
+- New `WelcomeManager` shows an Apple-style welcome window the first time Isle launches: app icon, three feature rows (Now Playing / Calendar / Markets), open-source attribution with a "View on GitHub" link, and a primary "Get Started" button.
+- Get Started triggers an "absorbed into the notch" animation — the card scales toward the top of the screen, fades, and the window closes once SwiftUI's spring finishes. Subsequent launches no-op (flagged in `UserDefaults`).
+- Pointer cursor + keyboard shortcut (Return) on the primary button.
+
 ## Tap v0.1.6.1 — Gatekeeper bypass via postflight
 
 - `homebrew-isle` cask formula now strips the `com.apple.quarantine` xattr in a `postflight` block so macOS Gatekeeper doesn't show "Apple cannot verify this app…" on first launch. Same pattern boring-notch and SourceGit use for ad-hoc-signed builds. (Earlier `brew install --cask` runs still triggered Gatekeeper because Homebrew sets quarantine by default and our cask wasn't stripping it.)

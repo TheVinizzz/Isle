@@ -7,6 +7,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let coordinator = NotchCoordinator()
         coordinator.start()
         self.coordinator = coordinator
+
+        // First-launch welcome card. Self-marks "seen" in UserDefaults so it
+        // won't show again on subsequent launches.
+        WelcomeManager.shared.showIfNeeded()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
