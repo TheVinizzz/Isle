@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.1 — Shadow color leak fix
+
+- Split the root `ZStack` into two layers: a clean black silhouette that owns the drop shadow, and a clipped content layer that owns the audio visualizer and widgets. The previous structure let the visualizer's `.plusLighter` blend mode tint the drop shadow with the artwork accent color, producing a faint horizontal halo below the panel.
+
 ## v0.13 — Audio halo & polish
 
 - Bottom-edge audio visualizer: three offset sine waves + linear-gradient glow tinted by the artwork's average color (Apple Music lock-screen pattern).
