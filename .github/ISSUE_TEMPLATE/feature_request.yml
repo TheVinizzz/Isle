@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a new widget or behavior
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the use case?
+      description: What problem does this solve? Who benefits?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would it look and behave? Apple-grade UX please.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: Uses only public APIs (no `MediaRemote.framework` private symbols)
+          required: true
+        - label: Pauses when not visible (no idle CPU)
+          required: true

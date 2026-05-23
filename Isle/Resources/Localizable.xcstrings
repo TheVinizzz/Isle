@@ -1,0 +1,36 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Allow Calendar access" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir acesso ao Calendário"
+          }
+        }
+      }
+    },
+    "Nothing scheduled" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada agendado"
+          }
+        }
+      }
+    },
+    "Not playing" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem música"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

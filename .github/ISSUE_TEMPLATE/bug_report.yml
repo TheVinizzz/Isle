@@ -1,0 +1,61 @@
+name: Bug report
+description: Something broke
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, expected vs actual behavior.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "14.5, 15.4, 26.0…"
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: MacBook model
+      placeholder: "MacBook Pro 14\" M3 Pro, 2023"
+    validations:
+      required: true
+  - type: input
+    id: isle-version
+    attributes:
+      label: Isle version
+      description: From the status bar menu (Version X.Y (build)).
+    validations:
+      required: true
+  - type: dropdown
+    id: source-app
+    attributes:
+      label: Affected widget
+      options:
+        - Now Playing (Spotify)
+        - Now Playing (Apple Music)
+        - Calendar
+        - Finance
+        - Audio visualizer
+        - Hover / panel behavior
+        - Status bar / Launch at Login
+        - Other / multiple
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional but appreciated)
+      description: |
+        Run in Terminal:
+        ```
+        log show --predicate 'process == "Isle"' --info --last 5m
+        ```
+      render: shell
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (drag-drop)
