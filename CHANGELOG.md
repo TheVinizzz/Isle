@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.3 — Collapsed-state layout fix
+
+- Conditionally render `ExpandedContent` and `AudioVisualizer` only when the panel is hovered. Their combined intrinsic width (~680pt rigid widths from NowPlaying + Calendar + Finance + dividers) was forcing the content `ZStack` to grow past the collapsed pill's `.frame(200, 32)`, ballooning the visible panel.
+- Added explicit `.frame(width: currentWidth, height: currentHeight)` to the content layer before `.clipShape(notchShape)` so the shape's path is generated against the panel's intended size rather than the children's intrinsic bounds.
+
 ## v0.1.2 — Installer experience
 
 - `scripts/install.sh` — one-line remote installer. Curl-downloaded artifacts skip the quarantine attribute browsers add, so installing this way avoids the "Apple cannot verify this app" prompt entirely.

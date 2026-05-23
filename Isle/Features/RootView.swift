@@ -39,11 +39,11 @@ struct RootView: View {
         VStack(spacing: 0) {
             ZStack {
                 // Shadow layer — clean silhouette so the drop shadow is pure
-                // black, regardless of what blend-mode tricks the content layer
-                // is doing above. Fixes accent-tinted halo bleeding below the
-                // panel.
+                // black, regardless of blend-mode tricks the content layer
+                // performs above.
                 notchShape
                     .fill(.black)
+                    .frame(width: currentWidth, height: currentHeight)
                     .shadow(
                         color: .black.opacity(isExpanded ? 0.45 : 0),
                         radius: 22,
@@ -51,33 +51,40 @@ struct RootView: View {
                         y: 10
                     )
 
-                // Content layer — clipped to the notch shape so nothing
-                // (visualizer, highlight, expanded content) can escape.
+                // Content layer — sized + clipped to the panel so the rigid
+                // widths of NowPlaying / Calendar / Finance never force the
+                // collapsed pill to balloon to their intrinsic combined width.
                 ZStack(alignment: .top) {
-                    AudioVisualizer(
-                        accentColor: media.artworkAccent,
-                        isActive: media.isPlaying && isExpanded,
-                        cornerRadius: cornerRadius
-                    )
+                    if isExpanded {
+                        AudioVisualizer(
+                            accentColor: media.artworkAccent,
+                            isActive: media.isPlaying,
+                            cornerRadius: cornerRadius
+                        )
+                        .transition(.opacity)
 
-                    ExpandedContent(
-                        media: media,
-                        calendar: calendar,
-                        finance: finance,
-                        notchHeight: notchSize.height
-                    )
-                    .opacity(isExpanded ? 1 : 0)
-                    .scaleEffect(isExpanded ? 1 : 0.96, anchor: .top)
-                    .animation(
-                        .easeOut(duration: 0.18).delay(isExpanded ? 0.10 : 0),
-                        value: isExpanded
-                    )
+                        ExpandedContent(
+                            media: media,
+                            calendar: calendar,
+                            finance: finance,
+                            notchHeight: notchSize.height
+                        )
+                        .transition(
+                            .opacity.combined(
+                                with: .scale(scale: 0.96, anchor: .top)
+                            )
+                        )
+                    }
 
                     topHighlight
                 }
+                .frame(width: currentWidth, height: currentHeight)
                 .clipShape(notchShape)
+                .animation(
+                    .easeOut(duration: 0.18).delay(isExpanded ? 0.10 : 0),
+                    value: isExpanded
+                )
             }
-            .frame(width: currentWidth, height: currentHeight)
             .animation(shapeSpring, value: isExpanded)
             .compositingGroup()
 
