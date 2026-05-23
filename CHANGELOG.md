@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.8 — Click pass-through outside the visible panel
+
+- `NotchWindow` now defaults to `ignoresMouseEvents = true`. The window frame stays full-canvas (820×200) so the spring animation has room to expand, but the controller flips `ignoresMouseEvents` to `false` only while the cursor is over the *visible* panel (collapsed pill or expanded card). Clicks anywhere else pass straight through to the app underneath.
+- Fixes a regression where, after the panel had been expanded once, the transparent area of the window kept swallowing clicks below the notch.
+
 ## v0.1.7 — First-launch welcome card
 
 - New `WelcomeManager` shows an Apple-style welcome window the first time Isle launches: app icon, three feature rows (Now Playing / Calendar / Markets), open-source attribution with a "View on GitHub" link, and a primary "Get Started" button.

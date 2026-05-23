@@ -25,7 +25,13 @@ final class NotchWindow: NSPanel {
         backgroundColor = .clear
         hasShadow = false
         isMovable = false
-        ignoresMouseEvents = false
+        // The window frame is 820×200 to accommodate the expanded panel +
+        // animation room, but the *visible* notch panel is much smaller.
+        // Default to passing mouse events through; the window controller
+        // flips this to `false` only while the cursor is over the visible
+        // panel (collapsed pill or expanded card), so apps underneath remain
+        // clickable everywhere else.
+        ignoresMouseEvents = true
         animationBehavior = .none
 
         // Sit above the menu bar and notifications.

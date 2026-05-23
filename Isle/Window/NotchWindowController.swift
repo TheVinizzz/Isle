@@ -146,6 +146,11 @@ final class NotchWindowController: NSWindowController {
             )
         }
 
+        // Capture clicks only while the cursor is over the visible panel;
+        // everywhere else, let the click reach whatever app is underneath.
+        // (The window frame stays full-canvas so animations have room.)
+        window?.ignoresMouseEvents = !shouldBeHovered
+
         presenter.setHovered(shouldBeHovered)
 
         if wasCollapsed && shouldBeHovered {
